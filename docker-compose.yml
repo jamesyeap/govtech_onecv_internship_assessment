@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  database:
+    container_name: database
+    image: postgres:12.8
+    restart: always
+    environment:
+      - POSTGRES_USER=pg
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=crud
+    ports:
+      - 8081:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+    depends_on:
+      - database
+    ports:
+     - 8080:8080
+
+volumes:
+  db:
