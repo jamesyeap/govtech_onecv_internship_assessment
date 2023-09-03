@@ -8,7 +8,7 @@ import (
 )
 
 type GetStudentNotificationListParam struct {
-	TeacherEmail string `json:"teacher"`
+	TeacherEmail        string `json:"teacher"`
 	NotificationMessage string `json:"notification"`
 }
 
@@ -16,13 +16,21 @@ type GetStudentNotificationListResponse struct {
 	Students []string `json:"recipients"`
 }
 
-func (h handler) GetStudentNotificationList(c *gin.Context) {
+func (h handler) GetStudentNotificationListHandler(c *gin.Context) {
 	param, issues := parseJsonBodyForGetStudentNotificationList(c)
-	if (len(issues) > 0) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, ParamError{ issues })
+	if len(issues) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ParamError{issues})
 		return
 	}
 
+	notificationList := h.getStudentNotificationList(param)
+
+	c.JSON(http.StatusOK, GetStudentNotificationListResponse{
+		Students: notificationList,
+	})
+}
+
+func (h handler) getStudentNotificationList(param GetStudentNotificationListParam) []string {
 	unsuspendedRegisteredStudents := h.FindUnsuspendedStudentsRegisteredToTeacherByEmail(param.TeacherEmail)
 
 	studentEmailsMentioned := findAllMentionedStudentsInMessage(param.NotificationMessage)
@@ -40,13 +48,11 @@ func (h handler) GetStudentNotificationList(c *gin.Context) {
 		notificationList = append(notificationList, studentEmail)
 	}
 
-	c.JSON(http.StatusOK, GetStudentNotificationListResponse{
-		Students: notificationList,
-	})
+	return notificationList
 }
 
 func parseJsonBodyForGetStudentNotificationList(c *gin.Context) (GetStudentNotificationListParam, map[string]interface{}) {
-	var param GetStudentNotificationListParam;
+	var param GetStudentNotificationListParam
 
 	issues := make(map[string]interface{})
 
@@ -58,13 +64,13 @@ func parseJsonBodyForGetStudentNotificationList(c *gin.Context) (GetStudentNotif
 
 	validateParamsReceivedForGetStudentNotificationList(param, issues)
 
-	return param, issues;
+	return param, issues
 }
 
 func validateParamsReceivedForGetStudentNotificationList(param GetStudentNotificationListParam, issues map[string]interface{}) {
-	if (param.TeacherEmail == "") {
-		issues["teacher"] = ValidationIssue{"required",""}
-	} else if (!IsValidEmailFormat(param.TeacherEmail)) {
+	if param.TeacherEmail == "" {
+		issues["teacher"] = ValidationIssue{"required", ""}
+	} else if !IsValidEmailFormat(param.TeacherEmail) {
 		issues["teacher"] = ValidationIssue{"invalid email format", ""}
 	}
 }
@@ -84,12 +90,12 @@ func findAllMentionedStudentsInMessage(message string) []string {
 
 func filterStringList(stringList []string) (filteredStringList []string) {
 	for _, s := range stringList {
-		if (IsValidMentionedFormat(s)) {
+		if IsValidMentionedFormat(s) {
 			filteredStringList = append(filteredStringList, s)
 		}
 	}
 
-	return;
+	return
 }
 
 func trimLeftChar(s string) string {

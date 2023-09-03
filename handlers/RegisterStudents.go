@@ -7,17 +7,23 @@ import (
 )
 
 type RegisterStudentsParam struct {
-	TeacherEmail string `json:"teacher"`
+	TeacherEmail  string   `json:"teacher"`
 	StudentEmails []string `json:"students"`
 }
 
-func (h handler) RegisterStudents(c *gin.Context) {
+func (h handler) RegisterStudentsHandler(c *gin.Context) {
 	param, issues := parseJsonBodyForRegisterStudents(c)
-	if (len(issues) > 0) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, ParamError{ issues })
+	if len(issues) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ParamError{issues})
 		return
 	}
-	
+
+	h.RegisterStudents(param)
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h handler) RegisterStudents(param RegisterStudentsParam) {
 	// fetch the teacher record using the email
 	teacher := h.FindTeacherByEmail(param.TeacherEmail)
 
@@ -28,12 +34,10 @@ func (h handler) RegisterStudents(c *gin.Context) {
 		h.DB.Model(&student).Association("Teachers").Append(teacher)
 		h.DB.Model(&teacher).Association("Students").Append(student)
 	}
-
-	c.Status(http.StatusNoContent)
 }
 
 func parseJsonBodyForRegisterStudents(c *gin.Context) (RegisterStudentsParam, map[string]interface{}) {
-	var param RegisterStudentsParam;
+	var param RegisterStudentsParam
 
 	issues := make(map[string]interface{})
 
@@ -45,19 +49,19 @@ func parseJsonBodyForRegisterStudents(c *gin.Context) (RegisterStudentsParam, ma
 
 	validateParamsReceivedForRegisterStudents(param, issues)
 
-	return param, issues;
+	return param, issues
 }
 
 func validateParamsReceivedForRegisterStudents(param RegisterStudentsParam, issues map[string]interface{}) {
-	if (param.TeacherEmail == "") {
-		issues["teacher"] = ValidationIssue{"required",""}
-	} else if (!IsValidEmailFormat(param.TeacherEmail)) {
+	if param.TeacherEmail == "" {
+		issues["teacher"] = ValidationIssue{"required", ""}
+	} else if !IsValidEmailFormat(param.TeacherEmail) {
 		issues["teacher"] = ValidationIssue{"invalid email format", ""}
 	}
 
-	if (param.StudentEmails == nil || len(param.StudentEmails) == 0) {
-		issues["students"] = ValidationIssue{"required",""}
-	} else if (!allStudentEmailsAreValid(param.StudentEmails)) {
+	if param.StudentEmails == nil || len(param.StudentEmails) == 0 {
+		issues["students"] = ValidationIssue{"required", ""}
+	} else if !allStudentEmailsAreValid(param.StudentEmails) {
 		issues["students"] = ValidationIssue{"invalid email format found in email list", ""}
 	}
 }
@@ -66,7 +70,7 @@ func allStudentEmailsAreValid(studentEmails []string) bool {
 	var allEmailsValid = true
 
 	for _, email := range studentEmails {
-		if (!IsValidEmailFormat(email)) {
+		if !IsValidEmailFormat(email) {
 			allEmailsValid = false
 			break
 		}

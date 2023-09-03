@@ -15,10 +15,10 @@ func main() {
 
 	router := gin.Default()
 
-	router.GET("/api/commonstudents", h.GetCommonStudents)
-	router.POST("/api/register", h.RegisterStudents)
-	router.POST("/api/suspend", h.SuspendStudent)
-	router.POST("/api/retrievefornotifications", h.GetStudentNotificationList)
+	router.GET("/api/commonstudents", h.GetCommonStudentsHandler)
+	router.POST("/api/register", h.RegisterStudentsHandler)
+	router.POST("/api/suspend", h.SuspendStudentHandler)
+	router.POST("/api/retrievefornotifications", h.GetStudentNotificationListHandler)
 
 	router.Run(HOST_ADDRESS)
 }

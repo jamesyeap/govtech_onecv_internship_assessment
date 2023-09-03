@@ -11,7 +11,7 @@ type GetCommonStudentsResponse struct {
 	Students []string `json:"students"`
 }
 
-func (h handler) GetCommonStudents(c *gin.Context) {
+func (h handler) GetCommonStudentsHandler(c *gin.Context) {
 
 	queryParams := c.Request.URL.Query()
 	teacherEmailList := queryParams["teacher"]
@@ -23,14 +23,14 @@ func (h handler) GetCommonStudents(c *gin.Context) {
 
 	issues := make(map[string]interface{})
 	validateParamsReceivedForGetCommonStudents(teacherEmailSet, issues)
-	if (len(issues) > 0) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, ParamError{ issues })
+	if len(issues) > 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ParamError{issues})
 		return
 	}
 
 	var numberOfTeachers = len(teacherEmailSet)
 
-	studentToTeacherMap := make(map[string][]string);
+	studentToTeacherMap := make(map[string][]string)
 
 	for teacherEmail := range teacherEmailSet {
 		registeredStudents := h.FindStudentsRegisteredToTeacherByEmail(teacherEmail)
@@ -46,7 +46,7 @@ func (h handler) GetCommonStudents(c *gin.Context) {
 	for studentEmail, registeredTeacherEmailList := range studentToTeacherMap {
 		log.Println(len(registeredTeacherEmailList), numberOfTeachers)
 
-		if (len(registeredTeacherEmailList) == numberOfTeachers) {
+		if len(registeredTeacherEmailList) == numberOfTeachers {
 			commonStudentEmailList = append(commonStudentEmailList, studentEmail)
 		}
 	}
@@ -55,17 +55,17 @@ func (h handler) GetCommonStudents(c *gin.Context) {
 		http.StatusOK,
 		GetCommonStudentsResponse{
 			Students: commonStudentEmailList,
-	})
+		})
 }
 
 func validateParamsReceivedForGetCommonStudents(teacherEmailSet map[string]bool, issues map[string]interface{}) {
-	if (len(teacherEmailSet) == 0) {
+	if len(teacherEmailSet) == 0 {
 		issues["teacher"] = ValidationIssue{"required", ""}
 		return
 	}
 
 	for email := range teacherEmailSet {
-		if (!IsValidEmailFormat(email)) {
+		if !IsValidEmailFormat(email) {
 			issues["teacher"] = ValidationIssue{"invalid email format", ""}
 			return
 		}
