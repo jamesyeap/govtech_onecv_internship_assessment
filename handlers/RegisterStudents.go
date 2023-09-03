@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"teacher_api/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,22 +19,24 @@ func (h handler) RegisterStudentsHandler(c *gin.Context) {
 		return
 	}
 
-	h.RegisterStudents(param)
-
-	c.Status(http.StatusNoContent)
-}
-
-func (h handler) RegisterStudents(param RegisterStudentsParam) {
 	// fetch the teacher record using the email
 	teacher := h.FindTeacherByEmail(param.TeacherEmail)
 
 	for _, studentEmail := range param.StudentEmails {
 		student := h.FindStudentByEmail(studentEmail)
 
+		if student == nil {
+			// for now, just add the student to the DB if doesn't exist
+			h.DB.Create(models.Student{Email: studentEmail})
+			student = h.FindStudentByEmail(studentEmail)
+		}
+
 		// add associations
 		h.DB.Model(&student).Association("Teachers").Append(teacher)
 		h.DB.Model(&teacher).Association("Students").Append(student)
 	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func parseJsonBodyForRegisterStudents(c *gin.Context) (RegisterStudentsParam, map[string]interface{}) {

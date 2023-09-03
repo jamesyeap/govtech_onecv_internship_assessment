@@ -8,28 +8,29 @@ import (
 )
 
 type handler struct {
-	DB  *gorm.DB
+	DB *gorm.DB
 }
 
 func New(db *gorm.DB) handler {
 	return handler{db}
 }
 
-// TODO: shift these helper functions into their own respective files in their own directory /////
 func (h handler) FindStudentByEmail(email string) *models.Student {
-	var student models.Student;
+	var student models.Student
 
-	if result := h.DB.Where("email = ?", email).First(&student); result.Error != nil {
+	if result := h.DB.Where(models.Student{Email: email}).FirstOrCreate(&student); result.Error != nil {
 		// TODO: log and return an appropriate error
 		log.Println(result.Error)
 	}
 
+	log.Println(student)
+
 	return &student
 }
 func (h handler) FindTeacherByEmail(email string) *models.Teacher {
-	var teacher models.Teacher;
+	var teacher models.Teacher
 
-	if result := h.DB.Where("email = ?", email).First(&teacher); result.Error != nil {
+	if result := h.DB.Where(models.Teacher{Email: email}).FirstOrCreate(&teacher); result.Error != nil {
 		// TODO: log and return an appropriate error
 		log.Println(result.Error)
 	}
@@ -43,10 +44,10 @@ func (h handler) FindStudentsRegisteredToTeacherByEmail(teacherEmail string) *[]
 	teacher := h.FindTeacherByEmail(teacherEmail)
 
 	// if teacher does not exist, return an empty array
-	if (teacher == nil) {
+	if teacher == nil {
 		return &students
 	}
-	
+
 	h.DB.Model(&teacher).Association("Students").Find(&students)
 
 	return &students
@@ -64,5 +65,3 @@ func (h handler) FindUnsuspendedStudentsRegisteredToTeacherByEmail(teacherEmail 
 
 	return &students
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
